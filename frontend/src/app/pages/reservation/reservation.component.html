@@ -1,0 +1,138 @@
+<header class="page-header">
+  <div>
+    <p class="eyebrow">CIRCULACIÓN · NUEVO REGISTRO</p>
+    <h1>Reservar libros</h1>
+    <p class="page-description">Selecciona un cliente y reúne los libros de su próxima lectura.</p>
+  </div>
+  <a mat-stroked-button routerLink="/pages/reservation-list">Ver reservas</a>
+</header>
+@if (saved()) {
+  <div class="success-banner" role="status">
+    <strong>La reserva está registrada.</strong> Puedes consultarla en el listado de reservas.
+  </div>
+}
+<form [formRoot]="entry.fields" (submit)="save($event)">
+  <div class="reservation-layout">
+    <div>
+      <section class="panel form-section">
+        <div class="section-heading">
+          <span class="step-number">1</span>
+          <div>
+            <h2>Cliente y fecha</h2>
+            <p>Indica para quién se registra la reserva.</p>
+          </div>
+        </div>
+        <div class="form-grid">
+          <mat-form-field appearance="outline"
+            ><mat-label>Cliente</mat-label
+            ><mat-select [formField]="entry.fields.idClient">
+              @for (c of clients.items(); track c.idClient) {
+                <mat-option [value]="c.idClient"
+                  >{{ c.firstName }} {{ c.lastName }} · {{ c.cedula }}</mat-option
+                >
+              }
+            </mat-select>
+            @if (!clients.loading() && !clients.items().length) {
+              <mat-hint>Registra un cliente antes de reservar.</mat-hint>
+            }
+          </mat-form-field>
+          <mat-form-field appearance="outline"
+            ><mat-label>Fecha y hora de reserva</mat-label
+            ><input matInput type="datetime-local" [formField]="entry.fields.reservationDate"
+          /></mat-form-field>
+        </div>
+      </section>
+      <section class="panel form-section">
+        <div class="section-heading">
+          <span class="step-number">2</span>
+          <div>
+            <h2>Elige los libros</h2>
+            <p>Solo se muestran libros disponibles que aún no has añadido.</p>
+          </div>
+        </div>
+        <mat-form-field appearance="outline" class="full-width"
+          ><mat-label>Buscar por título, autor o categoría</mat-label
+          ><input matInput [value]="term()" (input)="search($event)"
+        /></mat-form-field>
+        @if (books.loading()) {
+          <mat-progress-bar mode="indeterminate" aria-label="Cargando libros"></mat-progress-bar>
+        }
+        @if (books.resource.error() || clients.resource.error()) {
+          <div class="error-state">
+            No se pueden cargar los datos.<button
+              mat-button
+              type="button"
+              (click)="books.reload(); clients.reload()"
+            >
+              Reintentar
+            </button>
+          </div>
+        }
+        <div class="book-grid">
+          @for (book of available(); track book.idBook) {
+            <article class="book-option">
+              <span class="book-mark" aria-hidden="true">▤</span>
+              <div class="book-info">
+                <span class="category-label">{{ book.categoryName }}</span>
+                <h3>{{ book.title }}</h3>
+                <p>{{ book.author }}</p>
+                <small>ISBN {{ book.isbn }}</small>
+              </div>
+              <button
+                mat-stroked-button
+                type="button"
+                [disabled]="saving()"
+                (click)="add(book)"
+                [attr.aria-label]="'Añadir ' + book.title"
+              >
+                Añadir ＋
+              </button>
+            </article>
+          } @empty {
+            <div class="empty-state">
+              <h3>No hay libros para mostrar</h3>
+              <p>Comprueba la disponibilidad del catálogo o cambia la búsqueda.</p>
+            </div>
+          }
+        </div>
+      </section>
+    </div>
+    <aside class="panel reservation-summary">
+      <p class="eyebrow">RESUMEN DE LA RESERVA</p>
+      <h2>
+        {{ selected().length }}
+        {{ selected().length === 1 ? 'libro seleccionado' : 'libros seleccionados' }}
+      </h2>
+      <p class="summary-client">
+        {{ client() ? client()!.firstName + ' ' + client()!.lastName : 'Selecciona un cliente' }}
+      </p>
+      <div class="selected-books">
+        @for (book of selected(); track book.idBook) {
+          <div class="selected-book">
+            <div>
+              <strong>{{ book.title }}</strong
+              ><span>{{ book.author }}</span>
+            </div>
+            <button
+              mat-button
+              type="button"
+              [disabled]="saving()"
+              (click)="remove(book.idBook!)"
+              [attr.aria-label]="'Quitar ' + book.title"
+            >
+              Quitar
+            </button>
+          </div>
+        } @empty {
+          <p class="summary-empty">
+            Añade al menos un libro del catálogo para registrar una reserva.
+          </p>
+        }
+      </div>
+      <p class="summary-note">La reserva completa se guarda al confirmar.</p>
+      <button mat-flat-button type="submit" class="full-width" [disabled]="!canSave()">
+        {{ saving() ? 'Registrando…' : 'Confirmar reserva' }}
+      </button>
+    </aside>
+  </div>
+</form>

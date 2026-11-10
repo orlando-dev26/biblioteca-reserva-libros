@@ -1,0 +1,93 @@
+<header class="page-header">
+  <div>
+    <p class="eyebrow">CIRCULACIÓN · HISTORIAL</p>
+    <h1>Reservas realizadas</h1>
+    <p class="page-description">Consulta los registros y encuentra las reservas de cada cliente.</p>
+  </div>
+  <a mat-flat-button routerLink="/pages/reservation">＋ Nueva reserva</a>
+</header>
+<div class="stats-row">
+  <div class="stat-card">
+    <span>Reservas en esta consulta</span><strong>{{ store.items().length }}</strong>
+  </div>
+  <div class="stat-card">
+    <span>Libros incluidos</span><strong>{{ booksCount() }}</strong>
+  </div>
+  <div class="stat-card accent-card">
+    <span>Consulta por cliente</span>
+    <p>Un registro, todas sus lecturas.</p>
+  </div>
+</div>
+<section class="panel">
+  <div class="table-toolbar">
+    <div>
+      <h2>Historial de reservas</h2>
+      <p>Los registros más recientes aparecen primero.</p>
+    </div>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic"
+      ><mat-label>Filtrar por cliente</mat-label
+      ><mat-select [value]="store.clientId()" (selectionChange)="store.clientId.set($event.value)"
+        ><mat-option [value]="null">Todos los clientes</mat-option>
+        @for (c of clients.items(); track c.idClient) {
+          <mat-option [value]="c.idClient"
+            >{{ c.firstName }} {{ c.lastName }} · {{ c.cedula }}</mat-option
+          >
+        }
+      </mat-select></mat-form-field
+    >
+  </div>
+  @if (store.resource.isLoading()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Cargando reservas"></mat-progress-bar>
+  }
+  @if (store.resource.error()) {
+    <div class="error-state">
+      No se puede consultar el historial.<button mat-button (click)="store.reload()">
+        Reintentar
+      </button>
+    </div>
+  }
+  <div class="reservation-records">
+    @for (r of store.items(); track r.idReservation) {
+      <article class="reservation-record">
+        <div class="record-meta">
+          <span class="reservation-number">RESERVA #{{ r.idReservation }}</span
+          ><time>{{ r.reservationDate | date: 'dd/MM/yyyy · HH:mm' }}</time>
+        </div>
+        <div class="record-content">
+          <div class="record-client">
+            <span class="avatar" aria-hidden="true">{{ r.client.firstName.slice(0, 1) }}</span>
+            <div>
+              <h3>{{ r.client.firstName }} {{ r.client.lastName }}</h3>
+              <p>Cédula {{ r.client.cedula }}</p>
+              <small>{{ r.client.email }}</small>
+            </div>
+          </div>
+          <div class="record-books">
+            <span class="category-label"
+              >{{ r.details.length }} {{ r.details.length === 1 ? 'LIBRO' : 'LIBROS' }}</span
+            >
+            @for (d of r.details; track d.idDetailReservation) {
+              <div class="record-book">
+                <strong>{{ d.book.title }}</strong
+                ><span>{{ d.book.author }} · {{ d.book.categoryName }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </article>
+    } @empty {
+      <div class="empty-state">
+        <span class="empty-symbol">▤</span>
+        <h3>Aún no hay reservas en esta consulta</h3>
+        <p>
+          {{
+            store.clientId()
+              ? 'Este cliente todavía no tiene reservas registradas.'
+              : 'Registra la primera reserva para verla aquí.'
+          }}
+        </p>
+        <a mat-stroked-button routerLink="/pages/reservation">Registrar una reserva</a>
+      </div>
+    }
+  </div>
+</section>

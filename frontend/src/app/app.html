@@ -1,0 +1,42 @@
+<div class="app-shell">
+  <aside class="sidebar" [class.open]="menuOpen()">
+    <a class="brand" routerLink="/pages/book"
+      ><span class="brand-icon" aria-hidden="true">B</span
+      ><span>Biblioteca<small>GESTIÓN DE RESERVAS</small></span></a
+    >
+    <p class="nav-heading">ESPACIO DE TRABAJO</p>
+    <nav aria-label="Navegación principal">
+      @for (item of nav; track item.path) {
+        <a
+          [routerLink]="'/pages/' + item.path"
+          routerLinkActive="active"
+          (click)="menuOpen.set(false)"
+          ><span class="nav-icon" aria-hidden="true">{{ item.icon }}</span
+          >{{ item.label }}</a
+        >
+      }
+    </nav>
+    <div class="sidebar-note">
+      <span class="note-line"></span><strong>Cada libro, una nueva historia.</strong>
+      <p>Un espacio para organizar libros y conectar lectores.</p>
+    </div>
+    <footer class="sidebar-footer">CATÁLOGO Y CIRCULACIÓN</footer>
+  </aside>
+  <div class="main-shell">
+    <header class="topbar">
+      <button
+        class="mobile-menu"
+        type="button"
+        (click)="toggleMenu()"
+        aria-label="Mostrar u ocultar menú"
+      >
+        ☰</button
+      ><span>Biblioteca <span class="breadcrumb-separator">/</span> Administración</span
+      ><span class="workspace-badge"><span class="live-dot"></span>Espacio de trabajo</span>
+    </header>
+    <main>
+      <router-outlet></router-outlet>
+      <footer class="main-footer">BIBLIOTECA <span>Catálogo · Clientes · Reservas</span></footer>
+    </main>
+  </div>
+</div>

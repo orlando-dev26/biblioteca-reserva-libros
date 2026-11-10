@@ -1,0 +1,94 @@
+<header class="page-header">
+  <div>
+    <p class="eyebrow">CATÁLOGO · {{ store.items().length }} REGISTROS</p>
+    <h1>Categorías</h1>
+    <p class="page-description">Organiza el catálogo por áreas y temas.</p>
+  </div>
+  <button mat-flat-button (click)="open()">＋ Nueva categoría</button>
+</header>
+<section class="panel">
+  <div class="table-toolbar">
+    <div>
+      <h2>Todos los registros</h2>
+      <p>Consulta y actualiza la información del catálogo.</p>
+    </div>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic"
+      ><mat-label>Buscar en categorías</mat-label
+      ><input matInput (input)="filter($event)" placeholder="Escribe para filtrar"
+    /></mat-form-field>
+  </div>
+  @if (store.loading()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Cargando categorías"></mat-progress-bar>
+  }
+  @if (store.resource.error()) {
+    <div class="error-state">
+      No se puede cargar el catálogo.<button mat-button (click)="store.reload()">Reintentar</button>
+    </div>
+  }
+  <div class="table-scroll">
+    <table mat-table [dataSource]="dataSource" matSort>
+      <ng-container matColumnDef="name"
+        ><th mat-header-cell *matHeaderCellDef mat-sort-header>Nombre</th>
+        <td mat-cell *matCellDef="let row">
+          <span class="cell-title">{{ row.name }}</span>
+        </td></ng-container
+      ><ng-container matColumnDef="description"
+        ><th mat-header-cell *matHeaderCellDef mat-sort-header>Descripción</th>
+        <td mat-cell *matCellDef="let row">{{ row.description }}</td></ng-container
+      ><ng-container matColumnDef="state"
+        ><th mat-header-cell *matHeaderCellDef mat-sort-header>Estado</th>
+        <td mat-cell *matCellDef="let row">
+          <span class="status" [class.muted]="!row.state">{{
+            row.state ? 'Activa' : 'Inactiva'
+          }}</span>
+        </td></ng-container
+      >
+      <ng-container matColumnDef="actions"
+        ><th mat-header-cell *matHeaderCellDef>Acciones</th>
+        <td mat-cell *matCellDef="let row">
+          <div class="row-actions">
+            <button
+              mat-button
+              (click)="open(row)"
+              [attr.aria-label]="'Editar registro ' + row.idCategory"
+            >
+              Editar</button
+            ><button
+              mat-button
+              class="text-danger"
+              (click)="remove(row)"
+              [attr.aria-label]="'Eliminar registro ' + row.idCategory"
+            >
+              Eliminar
+            </button>
+          </div>
+        </td></ng-container
+      >
+      <tr mat-header-row *matHeaderRowDef="columns"></tr>
+      <tr mat-row *matRowDef="let row; columns: columns"></tr>
+      <tr *matNoDataRow>
+        <td [attr.colspan]="columns.length">
+          <div class="empty-state">
+            <span class="empty-symbol">▤</span>
+            <h3>
+              {{ store.items().length ? 'No hay coincidencias' : 'El catálogo comienza aquí' }}
+            </h3>
+            <p>
+              {{
+                store.items().length
+                  ? 'Prueba con otro texto de búsqueda.'
+                  : 'Agrega tu primer registro para comenzar.'
+              }}
+            </p>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+  <mat-paginator
+    [pageSizeOptions]="[5, 10, 25]"
+    [pageSize]="5"
+    showFirstLastButtons
+    aria-label="Paginación de categorías"
+  ></mat-paginator>
+</section>

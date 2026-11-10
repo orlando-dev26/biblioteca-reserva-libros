@@ -1,0 +1,19 @@
+spring:
+  config:
+    import: optional:file:.env.local[.properties]
+  application:
+    name: biblioteca-backend
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/biblioteca_db}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database: postgresql
+    show-sql: false
+    hibernate:
+      ddl-auto: update
+app:
+  front-url: ${FRONT_URL:http://localhost:4200}
+server:
+  port: ${SERVER_PORT:8080}

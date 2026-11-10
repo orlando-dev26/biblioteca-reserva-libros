@@ -1,0 +1,100 @@
+<header class="page-header">
+  <div>
+    <p class="eyebrow">CATÁLOGO · {{ store.items().length }} REGISTROS</p>
+    <h1>Libros</h1>
+    <p class="page-description">Administra los títulos, sus categorías y su disponibilidad.</p>
+  </div>
+  <button mat-flat-button (click)="open()">＋ Nuevo libro</button>
+</header>
+<section class="panel">
+  <div class="table-toolbar">
+    <div>
+      <h2>Todos los registros</h2>
+      <p>Consulta y actualiza la información del catálogo.</p>
+    </div>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic"
+      ><mat-label>Buscar en libros</mat-label
+      ><input matInput (input)="filter($event)" placeholder="Escribe para filtrar"
+    /></mat-form-field>
+  </div>
+  @if (store.loading()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Cargando libros"></mat-progress-bar>
+  }
+  @if (store.resource.error()) {
+    <div class="error-state">
+      No se puede cargar el catálogo.<button mat-button (click)="store.reload()">Reintentar</button>
+    </div>
+  }
+  <div class="table-scroll">
+    <table mat-table [dataSource]="dataSource" matSort>
+      <ng-container matColumnDef="title"
+        ><th mat-header-cell *matHeaderCellDef mat-sort-header>Título</th>
+        <td mat-cell *matCellDef="let row">
+          <span class="cell-title">{{ row.title }}</span>
+        </td></ng-container
+      ><ng-container matColumnDef="author"
+        ><th mat-header-cell *matHeaderCellDef mat-sort-header>Autor</th>
+        <td mat-cell *matCellDef="let row">{{ row.author }}</td></ng-container
+      ><ng-container matColumnDef="isbn"
+        ><th mat-header-cell *matHeaderCellDef mat-sort-header>ISBN</th>
+        <td mat-cell *matCellDef="let row">{{ row.isbn }}</td></ng-container
+      ><ng-container matColumnDef="categoryName"
+        ><th mat-header-cell *matHeaderCellDef mat-sort-header>Categoría</th>
+        <td mat-cell *matCellDef="let row">{{ row.categoryName }}</td></ng-container
+      ><ng-container matColumnDef="available"
+        ><th mat-header-cell *matHeaderCellDef mat-sort-header>Disponibilidad</th>
+        <td mat-cell *matCellDef="let row">
+          <span class="status" [class.muted]="!row.available">{{
+            row.available ? 'Disponible' : 'No disponible'
+          }}</span>
+        </td></ng-container
+      >
+      <ng-container matColumnDef="actions"
+        ><th mat-header-cell *matHeaderCellDef>Acciones</th>
+        <td mat-cell *matCellDef="let row">
+          <div class="row-actions">
+            <button
+              mat-button
+              (click)="open(row)"
+              [attr.aria-label]="'Editar registro ' + row.idBook"
+            >
+              Editar</button
+            ><button
+              mat-button
+              class="text-danger"
+              (click)="remove(row)"
+              [attr.aria-label]="'Eliminar registro ' + row.idBook"
+            >
+              Eliminar
+            </button>
+          </div>
+        </td></ng-container
+      >
+      <tr mat-header-row *matHeaderRowDef="columns"></tr>
+      <tr mat-row *matRowDef="let row; columns: columns"></tr>
+      <tr *matNoDataRow>
+        <td [attr.colspan]="columns.length">
+          <div class="empty-state">
+            <span class="empty-symbol">▤</span>
+            <h3>
+              {{ store.items().length ? 'No hay coincidencias' : 'El catálogo comienza aquí' }}
+            </h3>
+            <p>
+              {{
+                store.items().length
+                  ? 'Prueba con otro texto de búsqueda.'
+                  : 'Agrega tu primer registro para comenzar.'
+              }}
+            </p>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+  <mat-paginator
+    [pageSizeOptions]="[5, 10, 25]"
+    [pageSize]="5"
+    showFirstLastButtons
+    aria-label="Paginación de libros"
+  ></mat-paginator>
+</section>

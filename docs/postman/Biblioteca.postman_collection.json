@@ -1,0 +1,1132 @@
+{
+  "info": {
+    "name": "Biblioteca — Evaluación final",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "API local de reserva de libros. Ejecutar primero 01 Preparación. Los POST exitosos devuelven 201 con Location y sin cuerpo. CRUD utiliza registros temporales propios; las reservas registradas permanecen en la base de demostración. No requiere usuario, contraseña ni token."
+  },
+  "auth": {
+    "type": "noauth"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/v1",
+      "type": "string"
+    },
+    {
+      "key": "idCategory",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "idBook",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "idBook2",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "idUnavailableBook",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "idClient",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "idEmptyClient",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "idReservation",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "idCrudCategory",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "idCrudBook",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "idCrudClient",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reservationDate",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const now = new Date();",
+          "const pad = value => String(value).padStart(2, \"0\");",
+          "pm.collectionVariables.set(\"reservationDate\", `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`);"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "01 Preparación y consultas",
+      "description": "Enviar las cuatro peticiones en orden para cargar los IDs reales. Requiere los datos de datos-demo.mjs.",
+      "item": [
+        {
+          "name": "01 Listar categorías",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/categories",
+            "description": "01 Listar categorías"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  " const rows = pm.response.json();",
+                  " pm.test('Lista de categorías', () => pm.expect(rows).to.be.an('array'));",
+                  " const category = rows.find(x => x.name === 'Literatura') || rows[0];",
+                  " if (category) pm.collectionVariables.set('idCategory', category.idCategory);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "02 Listar libros",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/books",
+            "description": "02 Listar libros"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  " const rows = pm.response.json();",
+                  " const available = rows.filter(x => x.available);",
+                  " pm.test('Dos libros disponibles para la demostración', () => pm.expect(available.length).to.be.at.least(2));",
+                  " if (available[0]) pm.collectionVariables.set('idBook', available[0].idBook);",
+                  " if (available[1]) pm.collectionVariables.set('idBook2', available[1].idBook);",
+                  " const unavailable = rows.find(x => !x.available);",
+                  " if (unavailable) pm.collectionVariables.set('idUnavailableBook', unavailable.idBook);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "03 Listar clientes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/clients",
+            "description": "03 Listar clientes"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  " const rows = pm.response.json();",
+                  " const reader = rows.find(x => x.cedula === 'DEMO-001');",
+                  " const empty = rows.find(x => x.cedula === 'DEMO-002');",
+                  " pm.test('Clientes de demostración disponibles', () => { pm.expect(reader).to.be.an('object'); pm.expect(empty).to.be.an('object'); });",
+                  " if (reader) pm.collectionVariables.set('idClient', reader.idClient);",
+                  " if (empty) pm.collectionVariables.set('idEmptyClient', empty.idClient);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "04 Listar reservas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/reservations",
+            "description": "04 Listar reservas"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  " const rows = pm.response.json();",
+                  " pm.test('Fecha, cliente y libros en la respuesta', () => rows.forEach(row => {",
+                  "   pm.expect(row).to.have.property('reservationDate');",
+                  "   pm.expect(row.client).to.have.property('firstName');",
+                  "   pm.expect(row.details.length).to.be.at.least(1);",
+                  "   row.details.forEach(detail => pm.expect(detail.book).to.have.property('title'));",
+                  " }));",
+                  " if (rows[0]) pm.collectionVariables.set('idReservation', rows[0].idReservation);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 CRUD de catálogos",
+      "item": [
+        {
+          "name": "Categorías",
+          "description": "Ejecutar en orden. Crea un registro propio, lo consulta, actualiza y elimina. No utiliza ese registro en reservas.",
+          "item": [
+            {
+              "name": "01 Crear — 201 y Location",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/categories",
+                "description": "01 Crear — 201 y Location",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Categoría de prueba Postman\",\n  \"description\": \"Registro temporal para demostrar CRUD\",\n  \"state\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                      "if (pm.response.code === 201) {",
+                      " const location = pm.response.headers.get('Location');",
+                      " pm.test('Cabecera Location', () => pm.expect(location).to.match(/\\/\\d+$/));",
+                      " if (location) pm.collectionVariables.set('idCrudCategory', location.split('/').pop());",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "02 Consultar creado — 200",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/categories/{{idCrudCategory}}",
+                "description": "02 Consultar creado — 200"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "03 Actualizar — 200",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/categories/{{idCrudCategory}}",
+                "description": "03 Actualizar — 200",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Categoría actualizada Postman\",\n  \"description\": \"Actualización de prueba\",\n  \"state\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "04 Eliminar — 204",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/categories/{{idCrudCategory}}",
+                "description": "04 Eliminar — 204"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "05 Comprobar eliminado — 404",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/categories/{{idCrudCategory}}",
+                "description": "05 Comprobar eliminado — 404"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 404\", () => pm.response.to.have.status(404));",
+                      "pm.test(\"Error JSON uniforme\", () => { const data = pm.response.json(); [\"datetime\", \"message\", \"details\"].forEach(key => pm.expect(data).to.have.property(key)); });"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Libros",
+          "description": "Ejecutar en orden. Crea un registro propio, lo consulta, actualiza y elimina. No utiliza ese registro en reservas.",
+          "item": [
+            {
+              "name": "01 Crear — 201 y Location",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/books",
+                "description": "01 Crear — 201 y Location",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Libro de prueba Postman\",\n  \"author\": \"Autor de prueba\",\n  \"isbn\": \"POSTMAN-CRUD\",\n  \"available\": true,\n  \"idCategory\": {{idCategory}}\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                      "if (pm.response.code === 201) {",
+                      " const location = pm.response.headers.get('Location');",
+                      " pm.test('Cabecera Location', () => pm.expect(location).to.match(/\\/\\d+$/));",
+                      " if (location) pm.collectionVariables.set('idCrudBook', location.split('/').pop());",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "02 Consultar creado — 200",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/books/{{idCrudBook}}",
+                "description": "02 Consultar creado — 200"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "03 Actualizar — 200",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/books/{{idCrudBook}}",
+                "description": "03 Actualizar — 200",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Libro actualizado Postman\",\n  \"author\": \"Autor de prueba\",\n  \"isbn\": \"POSTMAN-CRUD\",\n  \"available\": false,\n  \"idCategory\": {{idCategory}}\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "04 Eliminar — 204",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/books/{{idCrudBook}}",
+                "description": "04 Eliminar — 204"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "05 Comprobar eliminado — 404",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/books/{{idCrudBook}}",
+                "description": "05 Comprobar eliminado — 404"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 404\", () => pm.response.to.have.status(404));",
+                      "pm.test(\"Error JSON uniforme\", () => { const data = pm.response.json(); [\"datetime\", \"message\", \"details\"].forEach(key => pm.expect(data).to.have.property(key)); });"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Clientes",
+          "description": "Ejecutar en orden. Crea un registro propio, lo consulta, actualiza y elimina. No utiliza ese registro en reservas.",
+          "item": [
+            {
+              "name": "01 Crear — 201 y Location",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/clients",
+                "description": "01 Crear — 201 y Location",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"firstName\": \"Cliente\",\n  \"lastName\": \"Prueba Postman\",\n  \"cedula\": \"POSTMAN-CRUD\",\n  \"email\": \"prueba@example.test\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                      "if (pm.response.code === 201) {",
+                      " const location = pm.response.headers.get('Location');",
+                      " pm.test('Cabecera Location', () => pm.expect(location).to.match(/\\/\\d+$/));",
+                      " if (location) pm.collectionVariables.set('idCrudClient', location.split('/').pop());",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "02 Consultar creado — 200",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/clients/{{idCrudClient}}",
+                "description": "02 Consultar creado — 200"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "03 Actualizar — 200",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/clients/{{idCrudClient}}",
+                "description": "03 Actualizar — 200",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"firstName\": \"Cliente actualizado\",\n  \"lastName\": \"Prueba Postman\",\n  \"cedula\": \"POSTMAN-CRUD\",\n  \"email\": \"actualizado@example.test\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "04 Eliminar — 204",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/clients/{{idCrudClient}}",
+                "description": "04 Eliminar — 204"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "05 Comprobar eliminado — 404",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/clients/{{idCrudClient}}",
+                "description": "05 Comprobar eliminado — 404"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 404\", () => pm.response.to.have.status(404));",
+                      "pm.test(\"Error JSON uniforme\", () => { const data = pm.response.json(); [\"datetime\", \"message\", \"details\"].forEach(key => pm.expect(data).to.have.property(key)); });"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 Reservas",
+      "description": "Cada POST exitoso registra una reserva nueva. Usar Laura (DEMO-001) para mantener a Diego sin reservas. Cada alta conserva su último ID en idReservation.",
+      "item": [
+        {
+          "name": "01 Registrar reserva de dos libros — 201",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/reservations",
+            "description": "01 Registrar reserva de dos libros — 201",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reservationDate\": \"{{reservationDate}}\",\n  \"idClient\": {{idClient}},\n  \"details\": [\n    {\n      \"idBook\": {{idBook}}\n    },\n    {\n      \"idBook\": {{idBook2}}\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) {",
+                  " const location = pm.response.headers.get('Location');",
+                  " pm.test('Cabecera Location', () => pm.expect(location).to.match(/\\/\\d+$/));",
+                  " if (location) pm.collectionVariables.set('idReservation', location.split('/').pop());",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "02 Consultar reserva registrada — 200",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/reservations/{{idReservation}}",
+            "description": "02 Consultar reserva registrada — 200"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Reserva con libros\", () => pm.expect(pm.response.json().details.length).to.be.at.least(1));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "03 Consultar por cliente — 200",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/reservations/client/{{idClient}}",
+            "description": "03 Consultar por cliente — 200"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "04 Cliente sin reservas — 200 y lista vacía",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/reservations/client/{{idEmptyClient}}",
+            "description": "04 Cliente sin reservas — 200 y lista vacía"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Lista vacía\", () => pm.expect(pm.response.json()).to.deep.equal([]));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "05 Registrar reserva de un libro — 201",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/reservations",
+            "description": "05 Registrar reserva de un libro — 201",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reservationDate\": \"{{reservationDate}}\",\n  \"idClient\": {{idClient}},\n  \"details\": [\n    {\n      \"idBook\": {{idBook}}\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) {",
+                  " const location = pm.response.headers.get('Location');",
+                  " pm.test('Cabecera Location', () => pm.expect(location).to.match(/\\/\\d+$/));",
+                  " if (location) pm.collectionVariables.set('idReservation', location.split('/').pop());",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "06 Consultar reserva de un libro — 200",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/reservations/{{idReservation}}",
+            "description": "06 Consultar reserva de un libro — 200"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Un detalle\", () => pm.expect(pm.response.json().details.length).to.equal(1));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 Validaciones y excepciones",
+      "item": [
+        {
+          "name": "01 Cliente con email inválido — 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/clients",
+            "description": "01 Cliente con email inválido — 400",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Prueba\",\n  \"lastName\": \"Validación\",\n  \"cedula\": \"VALIDACION\",\n  \"email\": \"correo-invalido\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Error JSON uniforme\", () => { const data = pm.response.json(); [\"datetime\", \"message\", \"details\"].forEach(key => pm.expect(data).to.have.property(key)); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "02 Reserva sin libros — 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/reservations",
+            "description": "02 Reserva sin libros — 400",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reservationDate\": \"{{reservationDate}}\",\n  \"idClient\": {{idClient}},\n  \"details\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Error JSON uniforme\", () => { const data = pm.response.json(); [\"datetime\", \"message\", \"details\"].forEach(key => pm.expect(data).to.have.property(key)); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "03 Libro repetido — 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/reservations",
+            "description": "03 Libro repetido — 400",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reservationDate\": \"{{reservationDate}}\",\n  \"idClient\": {{idClient}},\n  \"details\": [\n    {\n      \"idBook\": {{idBook}}\n    },\n    {\n      \"idBook\": {{idBook}}\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Error JSON uniforme\", () => { const data = pm.response.json(); [\"datetime\", \"message\", \"details\"].forEach(key => pm.expect(data).to.have.property(key)); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "04 Libro no disponible — 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/reservations",
+            "description": "04 Libro no disponible — 409",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reservationDate\": \"{{reservationDate}}\",\n  \"idClient\": {{idClient}},\n  \"details\": [\n    {\n      \"idBook\": {{idUnavailableBook}}\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Error JSON uniforme\", () => { const data = pm.response.json(); [\"datetime\", \"message\", \"details\"].forEach(key => pm.expect(data).to.have.property(key)); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "05 Libro inexistente — 404",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/books/2147483647",
+            "description": "05 Libro inexistente — 404"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Error JSON uniforme\", () => { const data = pm.response.json(); [\"datetime\", \"message\", \"details\"].forEach(key => pm.expect(data).to.have.property(key)); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    }
+  ]
+}
